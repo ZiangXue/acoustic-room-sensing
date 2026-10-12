@@ -27,9 +27,15 @@ Feasibility, resources, and fallback
 
 @Joseph What code, data, hardware, compute, or API access do you need? What is already available versus uncertain? Identify the largest risk and a simpler fallback that still makes it a viable project ad answers a useful question. [~80 words]
 
+We will need a board, a Raspberry Pi, 4-5 microphone arrays (ReSpeaker), a camera, and UWB tags and receivers. Ziang will provide the Raspberry Pi but the ReSpeakers kept by the Professor/the lab may be outdated. The biggest risk is the difficulty in signal capture/analysis from a very crowded/noisy environment. We will likely have to deploy an additional type of sensor/device like UWB tags to track individuals in the room. Alternatively, we can try having fewer individuals in the room. 
+
+
 Next steps and responsibilities
 
 @Joseph What concrete component or key assumption will you test by the next milestone in two weeks? Give an initial division of responsibilities among team members. [~60 words]
+
+We will start by obtaining microphone arrays to learn what raw sensor input looks like in a non-crowded room and in a crowded room (Ziang). At the same time, we can use simulated acoustics data from the pyroomacoustics Github project to test the signal analysis portion of the code for differentiating between different individuals (Joseph). We will also compare the raw data and the simulated data. 
+
 
 URL to your project repository at GitHub
 
