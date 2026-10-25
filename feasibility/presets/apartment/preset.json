@@ -1,0 +1,45 @@
+{
+  "description": "Living room, Aqara G100 on the wall, rug + floor stickers as calibration landmarks",
+
+  "camera": {
+    "env_file": "camera.env",
+    "image": [1920, 1080]
+  },
+  "sample_frame": "frames/sample_frame_stickers2.jpg",
+
+  "walking_area_px": [[630, 565], [880, 578], [1030, 612], [1330, 628], [1520, 662], [1600, 760],
+                      [1560, 900], [1490, 1050], [1230, 1075], [1000, 1055], [760, 900], [500, 940], [335, 835]],
+
+  "landmarks_px": {
+    "P1": [928, 736], "P2": [830, 712], "P3": [880, 748], "P4": [761, 822], "P5": [716, 874],
+    "P6": [500, 771], "P7": [600, 733], "P8": [692, 785],
+    "R1": [688, 623], "R2": [962, 735]
+  },
+  "sticker_pixels_file": "measurements/stickers_pixels.csv",
+  "distance_files": ["measurements/rug_distances.csv", "measurements/sticker_distances.csv"],
+  "distance_aliases": {"O": "R2"},
+  "ignore_distances": [["P4", "P5"]],
+
+  "rectangle_constraints": [
+    [["R1", "R2"], ["P5", "P1"]],
+    [["R1", "R2"], ["P4", "P3"]]
+  ],
+
+  "floor_frame": {
+    "origin": "R2",
+    "x_from": "R1",
+    "x_to": "R2",
+    "y_positive_toward": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"]
+  },
+
+  "noise": {
+    "landmark_px": {"P": 2.0, "R": 4.0},
+    "sticker_px": {"high": 1.5, "medium": 2.5, "low": 4.0},
+    "distance_in": 0.4,
+    "angle_deg": 3.0
+  },
+
+  "tracking": {
+    "ankle_height_m": 0.08
+  }
+}
