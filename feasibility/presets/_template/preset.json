@@ -1,0 +1,27 @@
+{
+  "description": "describe the room and camera",
+
+  "camera": {"env_file": "camera.env", "image": [1920, 1080]},
+  "sample_frame": "frames/sample_frame.jpg",
+
+  "walking_area_px": [[0, 0], [0, 0], [0, 0]],
+
+  "landmarks_px": {"R1": [0, 0], "R2": [0, 0]},
+  "sticker_pixels_file": "measurements/stickers_pixels.csv",
+  "distance_files": ["measurements/rug_distances.csv", "measurements/sticker_distances.csv"],
+  "distance_aliases": {},
+  "ignore_distances": [],
+
+  "rectangle_constraints": [],
+
+  "floor_frame": {"origin": "R2", "x_from": "R1", "x_to": "R2", "y_positive_toward": ["R1"]},
+
+  "noise": {
+    "landmark_px": {"P": 2.0, "R": 4.0},
+    "sticker_px": {"high": 1.5, "medium": 2.5, "low": 4.0},
+    "distance_in": 0.4,
+    "angle_deg": 3.0
+  },
+
+  "tracking": {"ankle_height_m": 0.08}
+}

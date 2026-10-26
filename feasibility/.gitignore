@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.DS_Store
+models/
+trash/
+# per-preset: camera credentials, unblurred camera frames and videos, and pictures with a face stay local
+presets/*/camera.env
+!presets/_template/camera.env
+presets/*/frames/
+presets/*/output/recordings/
+presets/*/output/sync/*_visual_claps.jpg
+# the 3-channel WAVs are 2.3x the size of the phone recordings: rebuilt with tools/make_wav.py
+presets/*/dataset/*/audio_abc.wav
