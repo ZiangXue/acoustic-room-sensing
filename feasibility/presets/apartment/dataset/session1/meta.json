@@ -1,0 +1,98 @@
+{
+ "session": 1,
+ "sample_rate": 48000,
+ "channels": [
+  "A",
+  "B",
+  "C"
+ ],
+ "bit_depth": 16,
+ "n_samples": 24952305,
+ "duration_s": 519.8396875,
+ "audio_starts_at_video_time_s": 25.71029274036436,
+ "floor_frame": "origin at rug corner R2, x along R1->R2 (toward the right wall), y perpendicular (toward the desk); inches and meters",
+ "phones_xy_in": {
+  "A": [
+   -82,
+   -23.5
+  ],
+  "B": [
+   68.4,
+   -26.5
+  ],
+  "C": [
+   -33.8,
+   63.8
+  ]
+ },
+ "phones_xy_m": {
+  "A": [
+   -2.0827999999999998,
+   -0.5969
+  ],
+  "B": [
+   1.73736,
+   -0.6730999999999999
+  ],
+  "C": [
+   -0.8585199999999998,
+   1.62052
+  ]
+ },
+ "clock_offsets_s": {
+  "A": 0.0,
+  "B": 6.456744104888406,
+  "C": -6.1496555710272816
+ },
+ "drift_ppm": {
+  "A": 0.0,
+  "B": 0.0,
+  "C": 0.0
+ },
+ "drift_status": "not estimated (no end claps)",
+ "clap_agreement_ms": {
+  "B": 0.35680507626079105,
+  "C": 0.9008264242034159
+ },
+ "claps_t_audio_s": [
+  7.480541666666666,
+  11.839520833333335,
+  15.419708333333336
+ ],
+ "clap_xy_in": [
+  -20.367557209559227,
+  27.48565542296754
+ ],
+ "clap_check_residual_ms": {
+  "B-A": [
+   0.4670247557723196,
+   -0.3026355977702143,
+   0.10728214822753115
+  ],
+  "C-A": [
+   0.9107799325903092,
+   0.4412023281835081,
+   0.4265519426654412
+  ]
+ },
+ "claps_t_video_s": [
+  33.2,
+  37.55,
+  41.100011
+ ],
+ "usable_from_s": 18.419708333333336,
+ "positions": {
+  "rows": 5198,
+  "rate_hz": 10,
+  "tracked": 5198,
+  "interp": 0,
+  "lost": 0,
+  "source": "session1_20261025_210104_track.csv"
+ },
+ "accuracy": {
+  "phone_to_phone_offset_at_the_claps_ms": "about +-0.5 (the 3 claps and 3 timing methods agree to this)",
+  "drift_ms_at_the_end": "UNMEASURED. There are no claps at the end, so each phone's clock rate against A is unknown. A drift of d ppm adds d * seconds_since_the_claps / 1000 ms of offset: 5 ppm is 2.7 ms (0.9 m) after 9 minutes. Trust the start more than the end.",
+  "audio_to_position_ms": "about +-40 (one video frame is 50 ms; from the hand claps in the video)",
+  "position": "feet midpoint from the offline tracker; about 1.6 cm calibration accuracy, plus detection error"
+ }
+}

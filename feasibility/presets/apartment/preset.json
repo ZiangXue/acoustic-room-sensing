@@ -41,5 +41,20 @@
 
   "tracking": {
     "ankle_height_m": 0.08
+  },
+
+  "session": {
+    "phones_in": [[-82, -23.5], [68.4, -26.5], [-33.8, 63.8]],
+    "stops": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "P2", "P7", "R1"],
+    "rug_corners_px": [[688, 623], [962, 735], [475, 935], [335, 830]],
+    "ring_margin_in": 8,
+    "ring_near_in": 36,
+    "phone_clear_in": 20,
+    "walk_speed_mps": 0.4,
+    "track_in": [[-60, -18], [-5, -34], [22, -42], [62, -32], [66, 0], [52, 30], [22, 36], [-14, 40], [-52, 28], [-64, 12]],
+    "n_sessions": 4,
+    "stops_per_session": 8,
+    "head_s": 25, "stand_s": 25, "walk_s": 30, "tail_s": 15,
+    "facings": ["the back wall (door)", "the camera / desk", "the right wall", "the sofa"]
   }
 }

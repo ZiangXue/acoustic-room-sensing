@@ -6,27 +6,29 @@ Serves on 0.0.0.0:9090:
   /events        server-sent events, one JSON per processed frame
   /state.json    latest state
   /calibration.json  landmarks and walking area for the map
+  /api/record/...    start / stop / status of the stream recorder (tools/recorder.py), used by the Record tab
 
 Position = midpoint of the two ankles. The pose model finds ankles from the body skeleton,
 so footwear (slippers, bare feet) does not matter. An ankle is a few cm above the floor, so its
 ray is intersected with the plane ANKLE_H above the floor, which puts the point under the ankle.
 
-Usage: track_server.py [--preset NAME] [--model yolo11m-pose.pt] [--imgsz 1280] [--port 9090] [--log NAME.csv|auto]
+Usage: track_server.py [--preset NAME] [--model yolo11m-pose.pt] [--imgsz 1280] [--port 9090] [--log NAME.csv|auto] [--blur] [--no-track]
 The camera URL (RTSP_URL) and the calibration come from the preset (presets/NAME/camera.env and
 output/calibration.json, the latter written by tools/calib_export.py). --log writes timestamped
-positions to the preset's output/tracks/ ("auto" names the file by the start time).
+positions to the preset's output/tracks/ ("auto" names the file by the start time). --no-track runs only the
+recorder page: no model, no extra load while recording.
 """
 import argparse
 import csv
 import json
 import math
 import os
+import signal
 import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp|fflags;nobuffer|flags;low_delay")
 import cv2
 import numpy as np
 
@@ -35,6 +37,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import calib
 import preset
+import recorder
 
 ANKLE_H = 0.08      # m, ankle keypoint height above the floor (default; the preset can override)
 ANKLE_CONF = 0.35   # minimum keypoint confidence to use an ankle
@@ -128,6 +131,8 @@ class Shared:
 
 
 def capture_loop(sh, url):
+    if url.startswith("rtsp"):
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|fflags;nobuffer|flags;low_delay"
     while True:
         cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
         if not cap.isOpened():
@@ -146,6 +151,19 @@ def capture_loop(sh, url):
         cap.release()
         print("capture: stream lost, reconnecting", flush=True)
         time.sleep(1)
+
+
+def blur_boxes(img, boxes, pad=0.2, block=26):
+    """Pixelate and blur each person box in place, for sharing the video without showing anyone."""
+    H, W = img.shape[:2]
+    for x0, y0, x1, y1 in boxes:
+        px, py = pad * (x1 - x0), pad * (y1 - y0)
+        x0, y0, x1, y1 = int(max(x0 - px, 0)), int(max(y0 - py, 0)), int(min(x1 + px, W)), int(min(y1 + py, H))
+        if x1 - x0 < 4 or y1 - y0 < 4:
+            continue
+        roi = img[y0:y1, x0:x1]
+        small = cv2.resize(roi, (max((x1 - x0) // block, 1), max((y1 - y0) // block, 1)), interpolation=cv2.INTER_AREA)
+        roi[:] = cv2.GaussianBlur(cv2.resize(small, (x1 - x0, y1 - y0), interpolation=cv2.INTER_NEAREST), (0, 0), block / 2)
 
 
 def pick_person(res, last_feet, accept_mask):
@@ -204,6 +222,8 @@ def inference_loop(sh, args, floor):
         pick = pick_person(res, last_feet if t0 - last_valid_t < 2.0 else None, accept)
         state = {"t": t_cap, "tracking": False, "lag_ms": 0}
         vis = frame.copy()
+        if args.blur and len(res.boxes):
+            blur_boxes(vis, res.boxes.xyxy.cpu().numpy())
         if pick is not None:
             _, i, pts, feet = pick
             kxy = res.keypoints.xy.cpu().numpy()[i]
@@ -254,9 +274,12 @@ def inference_loop(sh, args, floor):
             sh.cv.notify_all()
 
 
-def make_handler(sh, floor):
+def make_handler(sh, floor, rec):
     page = open(os.path.join(HERE, "track_ui.html"), "rb").read()
-    calib_json = json.dumps(floor.c).encode()
+    calib_json = json.dumps(floor.c).encode() if floor else b"{}"
+    config = json.dumps({"tracker": floor is not None, "preset": preset.NAME,
+                         "labels": preset.CFG.get("recording", {}).get("labels",
+                                   ["session1", "session2", "session3", "session4", "silence", "dryrun"])}).encode()
 
     class H(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -272,14 +295,41 @@ def make_handler(sh, floor):
             self.end_headers()
             self.wfile.write(body)
 
+        def do_POST(self):
+            # only our own page may start or stop a recording: it sends a custom header, which a
+            # page from another site cannot add without our server's permission
+            if self.headers.get("X-Requested-With") != "recorder":
+                return self._send(b'{"error": "forbidden"}', "application/json", 403)
+            n = min(int(self.headers.get("Content-Length") or 0), 4096)
+            try:
+                body = json.loads(self.rfile.read(n) or b"{}")
+            except ValueError:
+                body = {}
+            try:
+                if self.path == "/api/record/start":
+                    st = rec.start(str(body.get("label", "rec")))
+                elif self.path == "/api/record/stop":
+                    st = rec.stop("stopped by user")
+                else:
+                    return self._send(b'{"error": "not found"}', "application/json", 404)
+            except recorder.RecorderError as e:
+                return self._send(json.dumps({"error": str(e)}).encode(), "application/json", 409)
+            self._send(json.dumps(st).encode(), "application/json")
+
         def do_GET(self):
             path, _, q = self.path.partition("?")
             if path == "/":
                 self._send(page, "text/html; charset=utf-8")
+            elif path == "/api/config":
+                self._send(config, "application/json")
+            elif path == "/api/record/status":
+                self._send(json.dumps(rec.status()).encode(), "application/json")
             elif path == "/calibration.json":
                 self._send(calib_json, "application/json")
             elif path == "/state.json":
-                self._send(json.dumps(sh.state).encode(), "application/json")
+                self._send(json.dumps(sh.state if floor else {"tracker": False}).encode(), "application/json")
+            elif path in ("/video", "/events") and floor is None:
+                self._send(b"tracking is off (started with --no-track)", "text/plain", 404)
             elif path == "/video":
                 grid = 1 if "grid=1" in q else 0
                 self.send_response(200)
@@ -330,14 +380,27 @@ def main():
     ap.add_argument("--port", type=int, default=9090)
     ap.add_argument("--log", default="")
     ap.add_argument("--calibration", default=preset.out("calibration.json"))
-    ap.add_argument("--url", default="")
+    ap.add_argument("--url", default="", help="override the camera URL, e.g. a video file to replay")
+    ap.add_argument("--blur", action="store_true", help="pixelate detected people in the streamed video")
+    ap.add_argument("--no-track", action="store_true", help="recorder page only: no model, no live tracking")
+    ap.add_argument("--max-record-min", type=float, default=30, help="a recording stops by itself after this long")
     args = ap.parse_args()
     url = args.url or preset.camera_env()["RTSP_URL"]
-    floor = Floor(args.calibration)
     sh = Shared()
-    threading.Thread(target=capture_loop, args=(sh, url), daemon=True).start()
-    threading.Thread(target=inference_loop, args=(sh, args, floor), daemon=True).start()
-    srv = ThreadingHTTPServer(("0.0.0.0", args.port), make_handler(sh, floor))
+    floor = None
+    if not args.no_track:
+        floor = Floor(args.calibration)
+        threading.Thread(target=capture_loop, args=(sh, url), daemon=True).start()
+        threading.Thread(target=inference_loop, args=(sh, args, floor), daemon=True).start()
+    rec = recorder.Recorder(url, preset.out("recordings", ""), max_minutes=args.max_record_min)
+
+    def shutdown(*_):       # never leave ffmpeg writing after the server is gone
+        rec.stop("server stopped")
+        os._exit(0)
+
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+    srv = ThreadingHTTPServer(("0.0.0.0", args.port), make_handler(sh, floor, rec))
     srv.daemon_threads = True
     print(f"serving on http://0.0.0.0:{args.port}", flush=True)
     srv.serve_forever()
