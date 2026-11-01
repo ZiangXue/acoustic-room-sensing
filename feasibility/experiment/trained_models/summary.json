@@ -1,0 +1,105 @@
+{
+ "trained_on": "sessions 1 and 2 (all windows)",
+ "tested_on": "session 3",
+ "window_s": 1.0,
+ "step_s": 0.5,
+ "sample_rate": 16000,
+ "band_hz": [
+  300,
+  4000
+ ],
+ "band_edges_8": [
+  300.0,
+  414.704355652055,
+  573.2656753226203,
+  792.4525750070245,
+  1095.4451150103325,
+  1514.2862019085037,
+  2093.2702787842118,
+  2893.6276738960128,
+  4000.0
+ ],
+ "n_mels": 32,
+ "models": {
+  "broadband_ridge": {
+   "input": "broadband",
+   "method": "ridge",
+   "setting": "alpha=1000",
+   "seeds": 1,
+   "val_median_cm": 69.6,
+   "test_median_cm": 94.9,
+   "file": "broadband_ridge.pt",
+   "size_kb": 2
+  },
+  "broadband_knn": {
+   "input": "broadband",
+   "method": "knn",
+   "setting": "k=320",
+   "seeds": 1,
+   "val_median_cm": 69.7,
+   "test_median_cm": 92.6,
+   "file": "broadband_knn.pt",
+   "size_kb": 91
+  },
+  "broadband_mlp": {
+   "input": "broadband",
+   "method": "mlp",
+   "setting": "epochs=84",
+   "seeds": 5,
+   "val_median_cm": 68.7,
+   "test_median_cm": 93.2,
+   "file": "broadband_mlp.pt",
+   "size_kb": 100
+  },
+  "8-band_ridge": {
+   "input": "8-band",
+   "method": "ridge",
+   "setting": "alpha=1000",
+   "seeds": 1,
+   "val_median_cm": 50.2,
+   "test_median_cm": 77.3,
+   "file": "8-band_ridge.pt",
+   "size_kb": 3
+  },
+  "8-band_knn": {
+   "input": "8-band",
+   "method": "knn",
+   "setting": "k=10",
+   "seeds": 1,
+   "val_median_cm": 39.1,
+   "test_median_cm": 65.0,
+   "file": "8-band_knn.pt",
+   "size_kb": 355
+  },
+  "8-band_mlp": {
+   "input": "8-band",
+   "method": "mlp",
+   "setting": "epochs=15",
+   "seeds": 5,
+   "val_median_cm": 37.9,
+   "test_median_cm": 62.1,
+   "file": "8-band_mlp.pt",
+   "size_kb": 127
+  },
+  "logmel_cnn": {
+   "input": "log-mel spectrogram",
+   "method": "cnn",
+   "setting": "epochs=35",
+   "seeds": 3,
+   "val_median_cm": 35.1,
+   "test_median_cm": 60.3,
+   "file": "logmel_cnn.pt",
+   "size_kb": 100
+  },
+  "raw_cnn": {
+   "input": "raw audio",
+   "method": "cnn",
+   "setting": "epochs=26",
+   "seeds": 3,
+   "val_median_cm": 55.7,
+   "test_median_cm": 80.2,
+   "file": "raw_cnn.pt",
+   "size_kb": 150
+  }
+ }
+}
